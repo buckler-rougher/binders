@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Generate cover sheets, tables of contents, and binder tabs for congressional committee hearings and markups.">
+  <title>Congressional Committee Meeting Binder Maker</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://unpkg.com/svg2pdf.js@1.5.0/dist/svg2pdf.min.js"></script>
+  <script src="https://cdn.evanhollander.org/copyright.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <div class="header-text">
+          <h1>Congressional Committee Meeting Binder Maker</h1>
+          <p>Generates binder materials for hearings and markups.</p>
+        </div>
+        <button id="clearAll" class="secondary clear-button" title="Clear all data except API key and preferences">Clear All</button>
+      </div>
+    </header>
+
+    <section class="api-setup" id="apiSetup" style="display: none;">
+      <div class="api-setup-header">
+        <h2>API Configuration</h2>
+        <button id="closeApiConfig" class="close-button">×</button>
+      </div>
+      <div class="api-explanation">
+        <p>Congress.gov API key enables automatic loading of meeting details, bills, and witness information. <a href="https://api.congress.gov/sign-up/" target="_blank">Get a free key here</a>.</p>
+      </div>
+      <div id="apiConfigFields">
+        <div class="input-group">
+          <label for="apiKey">Congress.gov API Key</label>
+          <div class="api-input-wrapper">
+            <input type="password" id="apiKey" placeholder="Enter your Congress.gov API key">
+            <button id="copyApiKey" class="icon-button" title="Copy API key">Copy</button>
+          </div>
+          <button id="saveApiKey" class="secondary">Save Key</button>
+        </div>
+      </div>
+      <div style="margin-top: 16px;">
+        <button id="optOutApi" class="secondary">Don't use API</button>
+      </div>
+    </section>
+
+    <div class="api-configured-indicator" id="apiIndicator" style="display: none;">
+      <button id="showApiConfig" class="text-button">API Settings</button>
+    </div>
+
+    <section class="search-section" id="searchSection">
+      <h2>Find Committee Meeting</h2>
+      <div class="search-controls">
+        <div class="input-group">
+          <label for="chamber">Chamber *</label>
+          <select id="chamber">
+            <option value="house" selected>House</option>
+            <option value="senate">Senate</option>
+            <option value="joint">Joint</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="meetingDate">Meeting Date *</label>
+          <input type="date" id="meetingDate">
+        </div>
+        <button id="searchBtn" class="primary">Load Meetings</button>
+      </div>
+      <div class="filter-controls" style="margin-top: 12px; display: none;">
+        <div class="input-group">
+          <label for="committeeFilter">Filter by Committee</label>
+          <select id="committeeFilter">
+            <option value="">All Committees</option>
+          </select>
+        </div>
+      </div>
+      <div id="searchResults" class="search-results"></div>
+    </section>
+
+    <section class="binder-form">
+      <h2>Binder Information</h2>
+      <div class="form-grid">
+        <div class="input-group">
+          <label for="committee">Committee / Subcommittee</label>
+          <input type="text" id="committee" placeholder="e.g., House Committee on Energy and Commerce">
+        </div>
+        <div class="input-group">
+          <label for="meetingType">Meeting Type *</label>
+          <select id="meetingType">
+            <option value="hearing">Hearing</option>
+            <option value="markup">Markup</option>
+          </select>
+        </div>
+          <div class="input-group">
+          <label for="hearingTitle">Meeting Title *</label>
+          <input type="text" id="hearingTitle" placeholder="e.g., Markup of H.R. 1234">
+        </div>
+        <div class="input-group">
+          <label for="hearingDate">Date</label>
+          <input type="date" id="hearingDate">
+        </div>
+        <div class="input-group">
+          <label for="location">Location</label>
+          <input type="text" id="location" placeholder="e.g., Room 2128, Rayburn House Office Building">
+        </div>
+        <div class="input-group">
+          <label for="hearingTime">Time</label>
+          <input type="text" id="hearingTime" placeholder="e.g., 10:00 AM">
+        </div>
+      </div>
+    </section>
+
+    <section class="toc-section">
+      <h2>Table of Contents & Binder Tabs</h2>
+      <p class="help-text">Drag items to reorder. Click ✎ to edit. These will be converted to binder tabs.</p>
+      <div class="toc-list" id="tocList">
+        <!-- TOC items rendered here -->
+      </div>
+      <div class="button-row">
+        <button id="addTocItem" class="secondary">+ Add Item</button>
+        <button id="searchBill" class="secondary">Search Bill</button>
+        <button id="clearToc" class="secondary">Clear</button>
+      </div>
+      <div class="bill-search" id="billSearch" style="display: none; margin-top: 12px;">
+        <div class="input-group">
+          <label for="billType">Bill Type</label>
+          <select id="billType">
+            <option value="hr">H.R.</option>
+            <option value="s">S.</option>
+            <option value="hjres">H.J.Res.</option>
+            <option value="sjres">S.J.Res.</option>
+            <option value="hconres">H.Con.Res.</option>
+            <option value="sconres">S.Con.Res.</option>
+            <option value="hres">H.Res.</option>
+            <option value="sres">S.Res.</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="billNumber">Bill Number</label>
+          <div class="bill-search-wrapper">
+            <input type="number" id="billNumber" placeholder="e.g., 1234">
+            <button id="executeBillSearch" class="secondary">Search</button>
+          </div>
+        </div>
+        <div id="billSearchResults" class="bill-search-results"></div>
+      </div>
+      <div class="tabs-preview" style="margin-top: 16px;">
+        <label>Auto-generated tabs (click on one to edit it):</label>
+        <div id="tabsPreview" class="tabs-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
+      </div>
+    </section>
+
+    <section class="generate-section">
+      <h2>Generate PDFs</h2>
+      <div class="options-row">
+        <div class="input-group">
+          <label for="paperSize">Paper Size</label>
+          <select id="paperSize">
+            <option value="letter">Letter (8.5" × 11")</option>
+            <option value="a4">A4</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="binderCount">Number of Binders: <span id="binderCountValue">1</span> <span class="help-tooltip" title="Save paper by printing multiple binders' worth of tabs on the same page">?</span></label>
+          <input type="range" id="binderCount" min="1" max="10" value="1" style="width: 150px;">
+        </div>
+        <div class="input-group">
+          <label>Tab Template</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="tabTemplate" id="showBorders" value="cutLines" checked>
+              Show cut lines
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="tabTemplate" id="avery8Tab" value="avery8Tab">
+              Avery 8-tab paper (template 11228)
+            </label>
+          </div>
+          <p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+            <a href="https://officesupply.house.gov/product/1186" target="_blank" style="color: inherit;">Buy tab paper from House Office Supply</a>
+          </p>
+        </div>
+      </div>
+      <div class="generate-section-separator"></div>
+      <div class="generate-buttons">
+        <button id="generateAll" class="primary large">Generate All Three PDFs</button>
+        <div class="individual-buttons">
+          <button id="downloadCover" class="secondary">Cover Sheet Only</button>
+          <button id="downloadToc" class="secondary">Table of Contents Only</button>
+          <button id="downloadTabs" class="secondary">Binder Tabs Only</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="materials-section" id="materialsSection" style="display: none;">
+      <h2>Additional Materials</h2>
+      <p class="help-text">PDF documents linked to this meeting from Congress.gov</p>
+      <div id="materialsButtons" class="materials-buttons"></div>
+    </section>
+
+<section class="footer-section" id="footerSection">
+    <div class="footer-content">
+      <p class="footer-copyright">
+        Copyright &copy; <span id="year"></span> Evan M. Hollander;
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="footer-link" target="_blank">CC BY-NC-SA 4.0</a>
+      </p>
+      <p class="footer-contact">
+        Not working as expected, or need a new feature? Find a way to contact me <a href="https://links.evanhollander.org" class="footer-link" target="_blank">here</a>.<br><br>Not affiliated with <a href="https://congress.gov" class="footer-link" target="_blank">Congress.gov</a>.
+      </p>
+    </div>
+  </section>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
