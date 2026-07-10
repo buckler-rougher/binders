@@ -451,71 +451,79 @@ async function displayResults(meetings, congress, chamber) {
   
   // Hide filter controls until loaded
   document.querySelector('.filter-controls').style.display = 'none';
-  
+
   if (!meetings || meetings.length === 0) {
     container.innerHTML = '<div class="hearing-result"><p>No meetings found. This could be because:<br>• No meetings are scheduled<br>• The Congress.gov API has a delay<br>• Try selecting a different date</p></div>';
     loadedMeetings = [];
     return;
   }
-  
-  // Get target date from input
+
   const targetDate = document.getElementById('meetingDate').value;
-  
-  // Fetch full details for each meeting in parallel (list view doesn't include titles or meeting dates)
+  const allFetched = [];
+
+  // Returns whichever fetched meetings match the target date
+  const getMatches = () => {
+    if (!targetDate) return [...allFetched];
+    return allFetched.filter(m => {
+      const d = m.meetingDate || m.date || m.updateDate;
+      if (!d) return false;
+      const dp = (d.match(/^(\d{4}-\d{2}-\d{2})/) || ['', d.split('T')[0]])[1];
+      return dp === targetDate;
+    });
+  };
+
+  // Debounced progressive render — shows results as soon as any matching
+  // meeting arrives rather than waiting for all 250 to complete.
+  let renderPending = false;
+  const scheduleRender = () => {
+    if (renderPending) return;
+    renderPending = true;
+    setTimeout(() => {
+      renderPending = false;
+      const matches = getMatches();
+      if (matches.length > 0) {
+        populateCommitteeFilter(matches);
+        document.querySelector('.filter-controls').style.display = 'block';
+        renderMeetings(matches);
+      }
+    }, 0);
+  };
+
+  // Fetch all 250 detail records in parallel; render progressively as each arrives
   const fetchPromises = meetings.map(async (m) => {
     const eventId = m.eventId || m.eventid || (m.meeting && m.meeting.eventId);
     if (!eventId) return null;
-    
+
     try {
       const detailUrl = `https://api.congress.gov/v3/committee-meeting/${congress}/${chamber}/${eventId}?api_key=${apiKey}&format=json`;
       const response = await fetch(detailUrl);
       if (!response.ok) return null;
       const data = await response.json();
-      return data.meeting || data.committeeMeeting || data;
+      const result = data.meeting || data.committeeMeeting || data;
+      allFetched.push(result);
+      scheduleRender();
+      return result;
     } catch (err) {
       console.error('Failed to fetch meeting details for eventId:', eventId, 'error:', err);
       return null;
     }
   });
-  
-  // Wait for all fetches to complete
-  const results = await Promise.all(fetchPromises);
-  
-  // Filter out null results and apply date filtering
-  loadedMeetings = results.filter(m => m !== null);
-  
-  // Client-side date filtering
-  if (targetDate) {
-    loadedMeetings = loadedMeetings.filter(meeting => {
-      const meetingDate = meeting.meetingDate || meeting.date || meeting.updateDate;
-      if (meetingDate) {
-        const dateMatch = meetingDate.match(/^(\d{4}-\d{2}-\d{2})/);
-        const datePortion = dateMatch ? dateMatch[1] : meetingDate.split('T')[0];
-        return datePortion === targetDate;
-      }
-      return false;
-    });
-  }
-  
-  console.log(`Loaded ${loadedMeetings.length} meetings after detail fetch`);
-  
-  // Show message if no meetings match the date
+
+  await Promise.all(fetchPromises);
+
+  // Final authoritative render once everything is in
+  loadedMeetings = getMatches();
+
   if (loadedMeetings.length === 0 && targetDate) {
     container.innerHTML = `<div class="hearing-result"><p>No meetings found for ${targetDate}.<br>Try selecting a different date or <a href="https://www.congress.gov/committee-schedule/" target="_blank">check Congress.gov directly</a>. Or, you can manually add meeting details below!</p></div>`;
     return;
   }
-  
-  // Populate committee filter dropdown
+
   populateCommitteeFilter(loadedMeetings);
-  
-  // Show filter controls
   if (loadedMeetings.length > 0) {
     document.querySelector('.filter-controls').style.display = 'block';
   }
-  
   renderMeetings(loadedMeetings);
-  
-  // Save state after loading meetings
   saveState();
 }
 
@@ -1849,8 +1857,8 @@ async function generateTabsPDF(data) {
   function getFontSizeForTab(text, fontSize) {
     doc.setFontSize(fontSize);
     const lineHeight = fontSize * 0.014;
-    const maxWidth = tabW - 0.05;   // 0.025" per side
-    const maxHeight = tabH - 0.05;  // 0.025" per side
+    const maxWidth = tabW - 0.066;   // 0.033" per side
+    const maxHeight = tabH - 0.066;  // 0.033" per side
 
     const words = text.split(' ');
     const lines = [];
@@ -1956,12 +1964,12 @@ async function generateTabsPDF(data) {
       
       if (lines && lines.length > 0) {
         const totalTextHeight = lines.length * lineHeight;
-        const startTextY = y + 0.025 + (tabH - 0.05 - totalTextHeight) / 2 + lineHeight;
+        const startTextY = y + 0.033 + (tabH - 0.066 - totalTextHeight) / 2 + lineHeight;
 
         // Left column
         lines.forEach((line, lineIdx) => {
           const lineWidth = doc.getTextWidth(line);
-          const lineX = leftX + 0.025 + (tabW - 0.05 - lineWidth) / 2;
+          const lineX = leftX + 0.033 + (tabW - 0.066 - lineWidth) / 2;
           const lineY = startTextY + (lineIdx * lineHeight);
           doc.text(line, lineX, lineY);
         });
@@ -1969,7 +1977,7 @@ async function generateTabsPDF(data) {
         // Right column (duplicated)
         lines.forEach((line, lineIdx) => {
           const lineWidth = doc.getTextWidth(line);
-          const lineX = rightX + 0.025 + (tabW - 0.05 - lineWidth) / 2;
+          const lineX = rightX + 0.033 + (tabW - 0.066 - lineWidth) / 2;
           const lineY = startTextY + (lineIdx * lineHeight);
           doc.text(line, lineX, lineY);
         });
