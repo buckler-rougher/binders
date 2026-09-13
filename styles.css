@@ -12,25 +12,27 @@
   --shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+/* Public Sans — self-hosted. Previously three uncompressed TTFs pulled from
+   raw.githubusercontent.com, which is not a CDN and which GitHub asks people not
+   to hotlink. Two variable files replace them: 248KB -> 53KB, and the 500 and
+   600 weights this site uses are now real cuts rather than browser-synthesized
+   interpolations of 400 and 700. */
 @font-face {
   font-family: 'Public Sans';
-  src: url('https://raw.githubusercontent.com/uswds/public-sans/main/fonts/ttf/PublicSans-Regular.ttf') format('truetype');
-  font-weight: 400;
+  src: url('https://cdn.evanhollander.org/fonts/PublicSansVF.woff2') format('woff2-variations'),
+       url('https://cdn.evanhollander.org/fonts/PublicSansVF.woff2') format('woff2');
+  font-weight: 100 900;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'Public Sans';
-  src: url('https://raw.githubusercontent.com/uswds/public-sans/main/fonts/ttf/PublicSans-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Public Sans';
-  src: url('https://raw.githubusercontent.com/uswds/public-sans/main/fonts/ttf/PublicSans-Italic.ttf') format('truetype');
-  font-weight: 400;
+  src: url('https://cdn.evanhollander.org/fonts/PublicSansVF-Italic.woff2') format('woff2-variations'),
+       url('https://cdn.evanhollander.org/fonts/PublicSansVF-Italic.woff2') format('woff2');
+  font-weight: 100 900;
   font-style: italic;
+  font-display: swap;
 }
 
 * {
