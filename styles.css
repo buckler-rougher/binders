@@ -19,8 +19,8 @@
    interpolations of 400 and 700. */
 @font-face {
   font-family: 'Public Sans';
-  src: url('https://cdn.evanhollander.org/fonts/PublicSansVF.woff2') format('woff2-variations'),
-       url('https://cdn.evanhollander.org/fonts/PublicSansVF.woff2') format('woff2');
+  src: url('https://cdn.evanhollander.org/fonts/PublicSans/PublicSansVF.woff2') format('woff2-variations'),
+       url('https://cdn.evanhollander.org/fonts/PublicSans/PublicSansVF.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -28,8 +28,8 @@
 
 @font-face {
   font-family: 'Public Sans';
-  src: url('https://cdn.evanhollander.org/fonts/PublicSansVF-Italic.woff2') format('woff2-variations'),
-       url('https://cdn.evanhollander.org/fonts/PublicSansVF-Italic.woff2') format('woff2');
+  src: url('https://cdn.evanhollander.org/fonts/PublicSans/PublicSansVF-Italic.woff2') format('woff2-variations'),
+       url('https://cdn.evanhollander.org/fonts/PublicSans/PublicSansVF-Italic.woff2') format('woff2');
   font-weight: 100 900;
   font-style: italic;
   font-display: swap;
