@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Wrangler local state (account id, cached credentials)
+.wrangler/
+
+# Claude Code local state
+.claude/
