@@ -7,3 +7,8 @@
 
 # Claude Code local state
 .claude/
+
+# Agent instructions: local only. These deploy to the site root and are
+# served publicly — house-floor was exposing its deploy rules at /CLAUDE.md.
+CLAUDE.md
+AGENTS.md
